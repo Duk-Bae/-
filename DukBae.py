@@ -31,6 +31,7 @@ ytdlp_opts = {
 }
 
 ffmpeg_opts = {
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
     "options": "-vn"
 }
 
@@ -197,32 +198,36 @@ async def play(ctx, *, search: str):
         msg = await ctx.send("❗ 음성 채널에 먼저 들어가 주세요.")
         await asyncio.sleep(3)
         await msg.delete()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except:
+            pass
         return
 
+    # 음성 채널 연결
     if not ctx.voice_client:
         await ctx.author.voice.channel.connect()
 
+    # ✅ query 변수가 아니라 search를 써야 함
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(query, download=False)
+        info = ydl.extract_info(search, download=False)
 
     if "entries" in info:
         info = info["entries"][0]
 
-    url = info["url"]
-    source = discord.FFmpegPCMAudio(url)
+    # ✅ 큐에는 '웹페이지 URL'이 아니라 '오디오 스트림 URL'을 넣어야 재생됨
+    stream_url = info["url"]
 
-    voice.play(source)
-
-    song_queue.append(info["url"])
+    song_queue.append(stream_url)
     song_titles.append({
-        "title": info["title"],
+        "title": info.get("title", "제목 없음"),
         "thumbnail": info.get("thumbnail")
     })
 
     await update_song_queue_panel(ctx.guild)
 
-    if not ctx.voice_client.is_playing():
+    # ✅ 지금 재생 중 아니면 다음 곡 재생 시작
+    if not ctx.voice_client.is_playing() and not ctx.voice_client.is_paused():
         await play_next(ctx)
 
     try:
@@ -288,5 +293,6 @@ async def on_ready():
 
 access_token = os.environ["BOT_TOKEN"]
 bot.run(access_token)
+
 
 
