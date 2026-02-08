@@ -6,17 +6,21 @@ import random
 import os
 
 ydl_opts = {
-    "cookiefile": "cookies.txt"
     "format": "bestaudio/best",
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
     "source_address": "0.0.0.0",
+
+    # ✅ 유튜브 우회 옵션
     "extractor_args": {
         "youtube": {
             "player_client": ["android"]
         }
     },
+
+    # ✅ 쿠키 파일 (같은 폴더에 cookies.txt 있어야 함)
+    "cookiefile": "cookies.txt",
 }
 
 intents = discord.Intents.default()
@@ -294,6 +298,7 @@ async def on_ready():
 
 access_token = os.environ["BOT_TOKEN"]
 bot.run(access_token)
+
 
 
 
